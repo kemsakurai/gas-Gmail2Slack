@@ -2,15 +2,13 @@ function onOpen() {
 }
 function initialize() {
 }
-function inputToken() {
-}
-function getRooms() {
+function inputWebhookURL() {
 }
 function createSchedule() {
 }
 function updateSchedule() {
 }
-function sendEmail2Chatwork() {
+function sendEmail2Slack() {
 }/******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -130,10 +128,10 @@ module.exports = g;
 
 /***/ }),
 
-/***/ "./src/Gmail2Chatwork.ts":
-/*!*******************************!*\
-  !*** ./src/Gmail2Chatwork.ts ***!
-  \*******************************/
+/***/ "./src/Gmail2Slack.ts":
+/*!****************************!*\
+  !*** ./src/Gmail2Slack.ts ***!
+  \****************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -141,29 +139,29 @@ module.exports = g;
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Utils */ "./src/Utils.ts");
 
-var Gmail2Chatwork = /** @class */ (function () {
+var Gmail2Slack = /** @class */ (function () {
     /**
      * constructor
      * @param note
-     * @param roomId
+     * @param channel
      * @param sendTo
      * @param messageBodylength
      * @param query
      */
-    function Gmail2Chatwork(note, roomId, sendTo, messageBodylength, query) {
+    function Gmail2Slack(note, channel, sendTo, messageBodylength, query) {
         this.note = note;
-        this.roomId = roomId;
+        this.channel = channel;
         this.sendTo = sendTo;
         this.messageBodylength = messageBodylength;
         this.query = query;
-        this.token = _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].getChatworkToken();
-        _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].checkNotEmpty(this.token, 'token が 未設定です。token を設定してください。');
+        this.url = _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].getWebhookURL();
+        _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].checkNotEmpty(this.url, 'Webhook URL が 未設定です。Webhook URL を設定してください。');
     }
     /**
      * getMailSummaryOrBlank
      * @param feedItem
      */
-    Gmail2Chatwork.prototype.getMailSummaryOrBlank = function (mailBody) {
+    Gmail2Slack.prototype.getMailSummaryOrBlank = function (mailBody) {
         var summary;
         if (this.messageBodylength <= -1) {
             summary = mailBody;
@@ -174,21 +172,27 @@ var Gmail2Chatwork = /** @class */ (function () {
         else {
             summary = mailBody === '' ? '' : _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].truncate(mailBody, this.messageBodylength);
         }
-        return summary === '' ? '' : '[hr]' + summary;
+        return summary;
     };
     /**
      * createSendTo
      * @param sendToString
      */
-    Gmail2Chatwork.prototype.createSendTo = function (sendToString) {
-        var sendTo = sendToString === '' ? 'All' : sendToString;
+    Gmail2Slack.prototype.createSendTo = function (sendToString) {
+        var sendTo = sendToString === '' ? '@channel' : sendToString;
         // 送信IDが1つの場合は、数値型なので文字列へ変換する。
         sendTo = String(sendTo);
         var sendToArray = sendTo.split(',');
         var result = '';
         for (var _i = 0, sendToArray_1 = sendToArray; _i < sendToArray_1.length; _i++) {
             var elem = sendToArray_1[_i];
-            result += '[To:' + elem + ']' + '\n';
+            if (elem.indexOf('@') != 0) {
+                elem = '@' + elem;
+            }
+            if (elem == '@here' || elem == '@channel' || elem == '@everyone') {
+                elem = elem.replace('@', '!');
+            }
+            result += '<' + elem + '>' + ' ';
         }
         return result;
     };
@@ -196,7 +200,7 @@ var Gmail2Chatwork = /** @class */ (function () {
      * postMessage
      * @param feeds
      */
-    Gmail2Chatwork.prototype.postMessage = function () {
+    Gmail2Slack.prototype.postMessage = function () {
         var threads = GmailApp.search(this.query, 0, 50);
         var msgs = GmailApp.getMessagesForThreads(threads);
         //各スレッド×メール
@@ -206,31 +210,32 @@ var Gmail2Chatwork = /** @class */ (function () {
                 var msg = msgsInThread[j];
                 var dateString = Utilities.formatDate(msg.getDate(), 'JST', 'yyyy-MM-dd HH:mm:ss');
                 var message = this.createSendTo(this.sendTo) +
-                    '[info][title]' +
+                    ' ' +
+                    '\n' +
                     msg.getSubject() +
-                    '\n[' +
+                    '\n' +
                     dateString +
-                    '][/title]' +
+                    '\n' +
                     'https://mail.google.com/mail/u/0/?shva=1#inbox/' +
                     msg.getId() +
+                    '\n' +
                     this.getMailSummaryOrBlank(msg.getPlainBody()) +
-                    '[hr]' +
-                    this.note +
-                    '[/info]';
+                    '\n' +
+                    this.note;
                 if (message == '') {
                     continue;
                 }
                 var payload = {
-                    body: message,
-                    self_unread: '1'
+                    channel: this.channel,
+                    text: message
                 };
                 var options = {
                     method: 'post',
-                    headers: { 'X-ChatWorkToken': this.token },
-                    payload: payload
+                    contentType: 'application/json',
+                    payload: JSON.stringify(payload)
                 };
                 try {
-                    _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].fetchAsJson('https://api.chatwork.com/v2/rooms/' + this.roomId + '/messages', options);
+                    _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].fetchAsJson(this.url, options);
                 }
                 catch (e) {
                     if (e.errors == 'Rate limit exceeded') {
@@ -243,9 +248,9 @@ var Gmail2Chatwork = /** @class */ (function () {
         }
         return;
     };
-    return Gmail2Chatwork;
+    return Gmail2Slack;
 }());
-/* harmony default export */ __webpack_exports__["default"] = (Gmail2Chatwork);
+/* harmony default export */ __webpack_exports__["default"] = (Gmail2Slack);
 
 
 /***/ }),
@@ -278,17 +283,17 @@ var Utils = /** @class */ (function () {
         return value.substring(0, length) + '...';
     };
     /**
-     * setChatworkToken
+     * setWebhookURL
      * @param token
      */
-    Utils.setChatworkToken = function (token) {
-        PropertiesService.getScriptProperties().setProperty('CHATWORK_TOKEN', token);
+    Utils.setWebhookURL = function (token) {
+        PropertiesService.getScriptProperties().setProperty('SLACK_WEBHOOK_URL', token);
     };
     /**
-     * getChatworkToken
+     * getWebhookURL
      */
-    Utils.getChatworkToken = function () {
-        return PropertiesService.getScriptProperties().getProperty('CHATWORK_TOKEN');
+    Utils.getWebhookURL = function () {
+        return PropertiesService.getScriptProperties().getProperty('SLACK_WEBHOOK_URL');
     };
     /**
      * checkNotEmpty
@@ -303,12 +308,6 @@ var Utils = /** @class */ (function () {
      */
     Utils.getConfigSheetName = function () {
         return 'Config';
-    };
-    /**
-     * getRoomSheetName
-     */
-    Utils.getRoomSheetName = function () {
-        return 'Room';
     };
     return Utils;
 }());
@@ -337,49 +336,6 @@ var createSchedule = function () {
 
 /***/ }),
 
-/***/ "./src/getRooms.ts":
-/*!*************************!*\
-  !*** ./src/getRooms.ts ***!
-  \*************************/
-/*! exports provided: getRooms */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getRooms", function() { return getRooms; });
-/* harmony import */ var _Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Utils */ "./src/Utils.ts");
-
-var getRooms = function () {
-    console.info('getRooms start');
-    var token = _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].getChatworkToken();
-    _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].checkNotEmpty(token, 'token が 未設定です。token を設定してください。');
-    var options = {
-        method: 'get',
-        headers: { 'X-ChatWorkToken': token }
-    };
-    var response = _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].fetchAsJson('https://api.chatwork.com/v2/rooms', options);
-    var values = new Array();
-    for (var _i = 0, response_1 = response; _i < response_1.length; _i++) {
-        var room = response_1[_i];
-        var row = new Array();
-        row.push(room['name']);
-        row.push(room['room_id']);
-        values.push(row);
-    }
-    var roomSheetName = _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].getRoomSheetName();
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(roomSheetName);
-    // sheet clear
-    var range = sheet.getRange(2, 1, sheet.getLastRow(), 2);
-    range.clear();
-    // set values
-    range = sheet.getRange(2, 1, values.length, 2);
-    range.setValues(values);
-    console.info('getRooms end');
-};
-
-
-/***/ }),
-
 /***/ "./src/index.ts":
 /*!**********************!*\
   !*** ./src/index.ts ***!
@@ -392,10 +348,8 @@ __webpack_require__.r(__webpack_exports__);
 /* WEBPACK VAR INJECTION */(function(global) {/* harmony import */ var _initialize__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./initialize */ "./src/initialize.ts");
 /* harmony import */ var _createSchedule__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./createSchedule */ "./src/createSchedule.ts");
 /* harmony import */ var _updateSchedule__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./updateSchedule */ "./src/updateSchedule.ts");
-/* harmony import */ var _inputToken__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./inputToken */ "./src/inputToken.ts");
-/* harmony import */ var _sendEmail2Chatwork__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./sendEmail2Chatwork */ "./src/sendEmail2Chatwork.ts");
-/* harmony import */ var _getRooms__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./getRooms */ "./src/getRooms.ts");
-
+/* harmony import */ var _inputWebhookURL__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./inputWebhookURL */ "./src/inputWebhookURL.ts");
+/* harmony import */ var _sendEmail2Slack__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./sendEmail2Slack */ "./src/sendEmail2Slack.ts");
 
 
 
@@ -404,24 +358,22 @@ __webpack_require__.r(__webpack_exports__);
 function onOpen() {
     var lang = Session.getActiveUserLocale();
     var ui = SpreadsheetApp.getUi();
-    ui.createMenu('gas-Gmail2Chatwork')
+    ui.createMenu('gas-Gmail2Slack')
         .addSubMenu(ui
         .createMenu(lang === 'ja' ? '初期設定' : 'Initial setting')
         .addItem(lang === 'ja' ? '設定シート作成' : 'Create config sheets', 'initialize')
-        .addItem(lang === 'ja' ? 'Token設定' : 'Input token', 'inputToken')
-        .addItem(lang === 'ja' ? 'ルーム一覧を取得' : 'Get rooms', 'getRooms'))
+        .addItem(lang === 'ja' ? 'Webhook URL設定' : 'Input webhook URL', 'inputWebhookURL'))
         .addSeparator()
-        .addItem(lang === 'ja' ? 'Chatwork にメールを通知する' : 'Send email to Chatwork', 'sendEmail2Chatwork')
+        .addItem(lang === 'ja' ? 'Slack にメールを通知する' : 'Send email to Slack', 'sendEmail2Slack')
         .addItem(lang === 'ja' ? 'スケジュール実行' : 'Schedule', 'createSchedule')
         .addToUi();
 }
 global.onOpen = onOpen;
 global.initialize = _initialize__WEBPACK_IMPORTED_MODULE_0__["initialize"];
-global.inputToken = _inputToken__WEBPACK_IMPORTED_MODULE_3__["inputToken"];
-global.getRooms = _getRooms__WEBPACK_IMPORTED_MODULE_5__["getRooms"];
+global.inputWebhookURL = _inputWebhookURL__WEBPACK_IMPORTED_MODULE_3__["inputWebhookURL"];
 global.createSchedule = _createSchedule__WEBPACK_IMPORTED_MODULE_1__["createSchedule"];
 global.updateSchedule = _updateSchedule__WEBPACK_IMPORTED_MODULE_2__["updateSchedule"];
-global.sendEmail2Chatwork = _sendEmail2Chatwork__WEBPACK_IMPORTED_MODULE_4__["sendEmail2Chatwork"];
+global.sendEmail2Slack = _sendEmail2Slack__WEBPACK_IMPORTED_MODULE_4__["sendEmail2Slack"];
 
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
 
@@ -450,22 +402,10 @@ var initialize = function () {
         range.setBackground('yellow');
         var headers = new Array();
         headers.push('Notes');
-        headers.push('RoomId');
+        headers.push('Channel');
         headers.push('SendTo');
         headers.push('Message body length');
         headers.push('Query');
-        range.setValues([headers]);
-    }
-    var roomSheetName = _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].getRoomSheetName();
-    sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(roomSheetName);
-    if (!sheet) {
-        sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet();
-        sheet.setName(roomSheetName);
-        var range = sheet.getRange('A1:B1');
-        range.setBackground('yellow');
-        var headers = new Array();
-        headers.push('Name');
-        headers.push('RoomId');
         range.setValues([headers]);
     }
     console.info('initialize end');
@@ -474,62 +414,61 @@ var initialize = function () {
 
 /***/ }),
 
-/***/ "./src/inputToken.ts":
-/*!***************************!*\
-  !*** ./src/inputToken.ts ***!
-  \***************************/
-/*! exports provided: inputToken */
+/***/ "./src/inputWebhookURL.ts":
+/*!********************************!*\
+  !*** ./src/inputWebhookURL.ts ***!
+  \********************************/
+/*! exports provided: inputWebhookURL */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "inputToken", function() { return inputToken; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "inputWebhookURL", function() { return inputWebhookURL; });
 /* harmony import */ var _Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Utils */ "./src/Utils.ts");
 
-var inputToken = function () {
+var inputWebhookURL = function () {
     var ui = SpreadsheetApp.getUi();
-    var response = ui.prompt('ChatWork の API Token を入力してください。');
-    var token = response.getResponseText();
+    var response = ui.prompt('Slack の Webhook URL を入力してください。');
+    var url = response.getResponseText();
     // getSelectedButtonでクリックされたボタンの情報を取得できる。入力値なしか×ボタンをクリックされたかの確認をしている
-    if (token == '' || response.getSelectedButton() == ui.Button.CLOSE) {
+    if (url == '' || response.getSelectedButton() == ui.Button.CLOSE) {
         return;
     }
-    _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].setChatworkToken(token);
-    ui.alert('入力した値を ChatWork の API Token として設定しました。');
+    _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].setWebhookURL(url);
+    ui.alert('入力した値を Slack の Webhook URL として設定しました。');
 };
 
 
 /***/ }),
 
-/***/ "./src/sendEmail2Chatwork.ts":
-/*!***********************************!*\
-  !*** ./src/sendEmail2Chatwork.ts ***!
-  \***********************************/
-/*! exports provided: sendEmail2Chatwork */
+/***/ "./src/sendEmail2Slack.ts":
+/*!********************************!*\
+  !*** ./src/sendEmail2Slack.ts ***!
+  \********************************/
+/*! exports provided: sendEmail2Slack */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "sendEmail2Chatwork", function() { return sendEmail2Chatwork; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "sendEmail2Slack", function() { return sendEmail2Slack; });
 /* harmony import */ var _Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Utils */ "./src/Utils.ts");
-/* harmony import */ var _Gmail2Chatwork__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Gmail2Chatwork */ "./src/Gmail2Chatwork.ts");
+/* harmony import */ var _Gmail2Slack__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Gmail2Slack */ "./src/Gmail2Slack.ts");
 
 
-var sendEmail2Chatwork = function () {
-    console.info('sendEmail2Chatwork start');
+var sendEmail2Slack = function () {
+    console.info('sendEmail2Slack start');
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(_Utils__WEBPACK_IMPORTED_MODULE_0__["default"].getConfigSheetName());
     var range = sheet.getRange(2, 1, sheet.getLastRow() - 1, 5);
     var queries = range.getValues();
     for (var _i = 0, queries_1 = queries; _i < queries_1.length; _i++) {
         var elem = queries_1[_i];
-        // Notes、roomId、feedUrl の設定がなければ、処理の対象外
         if (elem[0] == '' || elem[1] == '' || elem[4] == '') {
             continue;
         }
-        var gmail2Chatwork = new _Gmail2Chatwork__WEBPACK_IMPORTED_MODULE_1__["default"](elem[0], elem[1], elem[2], elem[3], elem[4]);
-        gmail2Chatwork.postMessage();
+        var gmail2Slack = new _Gmail2Slack__WEBPACK_IMPORTED_MODULE_1__["default"](elem[0], elem[1], elem[2], elem[3], elem[4]);
+        gmail2Slack.postMessage();
     }
-    console.info('sendEmail2Chatwork end');
+    console.info('sendEmail2Slack end');
 };
 
 
@@ -546,7 +485,7 @@ var sendEmail2Chatwork = function () {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "updateSchedule", function() { return updateSchedule; });
 var KEY = 'trigger';
-var FUNCTION_NAME = 'sendEmail2Chatwork';
+var FUNCTION_NAME = 'sendEmail2Slack';
 var weekDay = [
     ScriptApp.WeekDay.MONDAY,
     ScriptApp.WeekDay.TUESDAY,

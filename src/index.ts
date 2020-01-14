@@ -1,9 +1,8 @@
 import { initialize } from './initialize';
 import { createSchedule } from './createSchedule';
 import { updateSchedule } from './updateSchedule';
-import { inputToken } from './inputToken';
+import { inputWebhookURL } from './inputWebhookURL';
 import { sendEmail2Slack } from './sendEmail2Slack';
-import { getRooms } from './getRooms';
 
 function onOpen() {
   var lang = Session.getActiveUserLocale();
@@ -13,13 +12,10 @@ function onOpen() {
       ui
         .createMenu(lang === 'ja' ? '初期設定' : 'Initial setting')
         .addItem(lang === 'ja' ? '設定シート作成' : 'Create config sheets', 'initialize')
-        .addItem(lang === 'ja' ? 'Token設定' : 'Input token', 'inputToken')
+        .addItem(lang === 'ja' ? 'Webhook URL設定' : 'Input webhook URL', 'inputWebhookURL')
     )
     .addSeparator()
-    .addItem(
-      lang === 'ja' ? 'Slack にメールを通知する' : 'Send email to Slack',
-      'sendEmail2Slack'
-    )
+    .addItem(lang === 'ja' ? 'Slack にメールを通知する' : 'Send email to Slack', 'sendEmail2Slack')
     .addItem(lang === 'ja' ? 'スケジュール実行' : 'Schedule', 'createSchedule')
     .addToUi();
 }
@@ -27,8 +23,7 @@ function onOpen() {
 declare let global: any;
 global.onOpen = onOpen;
 global.initialize = initialize;
-global.inputToken = inputToken;
-global.getRooms = getRooms;
+global.inputWebhookURL = inputWebhookURL;
 global.createSchedule = createSchedule;
 global.updateSchedule = updateSchedule;
-global.sendEmail2Chatwork = sendEmail2Slack;
+global.sendEmail2Slack = sendEmail2Slack;

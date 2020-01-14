@@ -9,7 +9,6 @@ export const sendEmail2Slack = (): void => {
   let range: GoogleAppsScript.Spreadsheet.Range = sheet.getRange(2, 1, sheet.getLastRow() - 1, 5);
   let queries: any[][] = range.getValues();
   for (let elem of queries) {
-    // Notes、roomId、feedUrl の設定がなければ、処理の対象外
     if (elem[0] == '' || elem[1] == '' || elem[4] == '') {
       continue;
     }

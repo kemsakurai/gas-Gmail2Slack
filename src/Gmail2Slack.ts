@@ -2,34 +2,34 @@ import Utils from './Utils';
 
 export default class Gmail2Slack {
   note: string;
-  roomId: string;
+  channel: string;
   sendTo: string;
-  token: string;
+  url: string;
   messageBodylength: number;
   query: string;
 
   /**
    * constructor
    * @param note
-   * @param roomId
+   * @param channel
    * @param sendTo
    * @param messageBodylength
    * @param query
    */
   constructor(
     note: string,
-    roomId: string,
+    channel: string,
     sendTo: string,
     messageBodylength: number,
     query: string
   ) {
     this.note = note;
-    this.roomId = roomId;
+    this.channel = channel;
     this.sendTo = sendTo;
     this.messageBodylength = messageBodylength;
     this.query = query;
-    this.token = Utils.getChatworkToken();
-    Utils.checkNotEmpty(this.token, 'token が 未設定です。token を設定してください。');
+    this.url = Utils.getWebhookURL();
+    Utils.checkNotEmpty(this.url, 'Webhook URL が 未設定です。Webhook URL を設定してください。');
   }
 
   /**
@@ -45,20 +45,28 @@ export default class Gmail2Slack {
     } else {
       summary = mailBody === '' ? '' : Utils.truncate(mailBody, this.messageBodylength);
     }
-    return summary === '' ? '' : '[hr]' + summary;
+    return summary;
   }
+
   /**
    * createSendTo
    * @param sendToString
    */
   private createSendTo(sendToString: string): string {
-    let sendTo = sendToString === '' ? 'All' : sendToString;
+    let sendTo = sendToString === '' ? '@channel' : sendToString;
     // 送信IDが1つの場合は、数値型なので文字列へ変換する。
     sendTo = String(sendTo);
     let sendToArray = sendTo.split(',');
     let result = '';
     for (let elem of sendToArray) {
-      result += '[To:' + elem + ']' + '\n';
+      if (elem.indexOf('@') != 0) {
+        elem = '@' + elem;
+      }
+
+      if (elem == '@here' || elem == '@channel' || elem == '@everyone') {
+        elem = elem.replace('@', '!');
+      }
+      result += '<' + elem + '>' + ' ';
     }
     return result;
   }
@@ -76,39 +84,38 @@ export default class Gmail2Slack {
       for (let j = 0; j < msgsInThread.length; j++) {
         let msg = msgsInThread[j];
         let dateString: string = Utilities.formatDate(msg.getDate(), 'JST', 'yyyy-MM-dd HH:mm:ss');
-
         let message =
           this.createSendTo(this.sendTo) +
-          '[info][title]' +
+          ' ' +
+          '\n' +
           msg.getSubject() +
-          '\n[' +
+          '\n' +
           dateString +
-          '][/title]' +
+          '\n' +
           'https://mail.google.com/mail/u/0/?shva=1#inbox/' +
           msg.getId() +
+          '\n' +
           this.getMailSummaryOrBlank(msg.getPlainBody()) +
-          '[hr]' +
-          this.note +
-          '[/info]';
+          '\n' +
+          this.note;
 
         if (message == '') {
           continue;
         }
 
         let payload = {
-          body: message,
-          self_unread: '1'
+          channel: this.channel,
+          text: message
         };
+
         const options: Object = {
           method: 'post',
-          headers: { 'X-ChatWorkToken': this.token },
-          payload: payload
+          contentType: 'application/json',
+          payload: JSON.stringify(payload)
         };
+
         try {
-          Utils.fetchAsJson(
-            'https://api.chatwork.com/v2/rooms/' + this.roomId + '/messages',
-            options
-          );
+          Utils.fetchAsJson(this.url, options);
         } catch (e) {
           if (e.errors == 'Rate limit exceeded') {
             throw e.errors;

@@ -15,17 +15,17 @@ export default class Utils {
     return value.substring(0, length) + '...';
   }
   /**
-   * setChatworkToken
+   * setWebhookURL
    * @param token
    */
-  public static setChatworkToken(token: string): void {
-    PropertiesService.getScriptProperties().setProperty('CHATWORK_TOKEN', token);
+  public static setWebhookURL(token: string): void {
+    PropertiesService.getScriptProperties().setProperty('SLACK_WEBHOOK_URL', token);
   }
   /**
-   * getChatworkToken
+   * getWebhookURL
    */
-  public static getChatworkToken(): string {
-    return PropertiesService.getScriptProperties().getProperty('CHATWORK_TOKEN');
+  public static getWebhookURL(): string {
+    return PropertiesService.getScriptProperties().getProperty('SLACK_WEBHOOK_URL');
   }
   /**
    * checkNotEmpty
@@ -40,12 +40,5 @@ export default class Utils {
    */
   public static getConfigSheetName(): string {
     return 'Config';
-  }
-
-  /**
-   * getRoomSheetName
-   */
-  public static getRoomSheetName(): string {
-    return 'Room';
   }
 }

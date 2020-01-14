@@ -1,5 +1,5 @@
 const KEY = 'trigger';
-const FUNCTION_NAME = 'sendEmail2Chatwork';
+const FUNCTION_NAME = 'sendEmail2Slack';
 
 const weekDay = [
   ScriptApp.WeekDay.MONDAY,

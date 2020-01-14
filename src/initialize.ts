@@ -11,23 +11,10 @@ export const initialize = (): void => {
     range.setBackground('yellow');
     const headers: string[] = new Array();
     headers.push('Notes');
-    headers.push('RoomId');
+    headers.push('Channel');
     headers.push('SendTo');
     headers.push('Message body length');
     headers.push('Query');
-    range.setValues([headers]);
-  }
-
-  const roomSheetName: string = Utils.getRoomSheetName();
-  sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(roomSheetName);
-  if (!sheet) {
-    sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet();
-    sheet.setName(roomSheetName);
-    const range = sheet.getRange('A1:B1');
-    range.setBackground('yellow');
-    const headers: string[] = new Array();
-    headers.push('Name');
-    headers.push('RoomId');
     range.setValues([headers]);
   }
   console.info('initialize end');
