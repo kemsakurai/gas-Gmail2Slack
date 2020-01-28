@@ -84,30 +84,31 @@ export default class Gmail2Slack {
       for (let j = 0; j < msgsInThread.length; j++) {
         let msg = msgsInThread[j];
         let dateString: string = Utilities.formatDate(msg.getDate(), 'JST', 'yyyy-MM-dd HH:mm:ss');
-        let message =
-          this.createSendTo(this.sendTo) +
-          ' ' +
-          '\n' +
-          msg.getSubject() +
-          '\n' +
-          dateString +
-          '\n' +
-          'https://mail.google.com/mail/u/0/?shva=1#inbox/' +
-          msg.getId() +
-          '\n' +
-          this.getMailSummaryOrBlank(msg.getPlainBody()) +
-          '\n' +
-          this.note;
-
-        if (message == '') {
-          continue;
-        }
-
+        let mailUrl = 'https://mail.google.com/mail/u/0/?shva=1#inbox/' + msg.getId();
         let payload = {
           channel: this.channel,
-          text: message
+          attachments: [
+            {
+              fallback: 'メールを受信しました。（' + mailUrl + '）',
+              pretext: this.createSendTo(this.sendTo) + ' メールを受信しました。',
+              title: msg.getSubject(),
+              title_link: mailUrl,
+              text: this.getMailSummaryOrBlank(msg.getPlainBody()),
+              fields: [
+                {
+                  title: '受信時刻',
+                  value: dateString,
+                  short: true
+                },
+                {
+                  title: 'タグ',
+                  value: this.note,
+                  short: true
+                }
+              ]
+            }
+          ]
         };
-
         const options: Object = {
           method: 'post',
           contentType: 'application/json',
