@@ -4,10 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "tslint --fix src/**/*.ts",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint --fix src/**/*.ts",
     "test": "jest",
     "build": "npm run lint && rimraf dist && webpack && cpx src/appsscript.json dist",
-    "deploy": "npm run build && clasp push"
+    "deploy": "npm run build && clasp push",
+    "setup": "rm -f .clasp.json && clasp create --type sheets --title 'gas-Gmail2Slack' --rootDir ./dist",
+    "setup:use-id": "clasp setting scriptId"    
   },
   "repository": {
     "type": "git",
@@ -27,18 +30,20 @@
   "devDependencies": {
     "@types/google-apps-script": "0.0.45",
     "@types/jest": "^24.0.25",
+    "@typescript-eslint/eslint-plugin": "^3.8.0",
+    "@typescript-eslint/parser": "^3.8.0",
     "cpx": "1.5.0",
+    "eslint": "^7.6.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.4",
     "gas-webpack-plugin": "1.0.2",
     "html-loader": "^0.5.5",
     "html-webpack-plugin": "^3.2.0",
     "jest": "^24.9.0",
-    "prettier": "1.17.0",
+    "prettier": "^1.17.0",
     "rimraf": "2.6.3",
     "ts-jest": "24.0.2",
     "ts-loader": "5.4.4",
-    "tslint": "5.16.0",
-    "tslint-config-prettier": "1.18.0",
-    "tslint-plugin-prettier": "2.0.1",
     "typescript": "3.4.5",
     "webpack": "^4.41.5",
     "webpack-cli": "3.3.1"

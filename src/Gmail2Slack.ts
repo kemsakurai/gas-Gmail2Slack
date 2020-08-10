@@ -1,4 +1,4 @@
-import Utils from './Utils';
+import Utils from "./Utils";
 
 export default class Gmail2Slack {
   note: string;
@@ -29,7 +29,10 @@ export default class Gmail2Slack {
     this.messageBodylength = messageBodylength;
     this.query = query;
     this.url = Utils.getWebhookURL();
-    Utils.checkNotEmpty(this.url, 'Webhook URL が 未設定です。Webhook URL を設定してください。');
+    Utils.checkNotEmpty(
+      this.url,
+      "Webhook URL が 未設定です。Webhook URL を設定してください。"
+    );
   }
 
   /**
@@ -41,9 +44,10 @@ export default class Gmail2Slack {
     if (this.messageBodylength <= -1) {
       summary = mailBody;
     } else if (this.messageBodylength == 0) {
-      summary = '';
+      summary = "";
     } else {
-      summary = mailBody === '' ? '' : Utils.truncate(mailBody, this.messageBodylength);
+      summary =
+        mailBody === "" ? "" : Utils.truncate(mailBody, this.messageBodylength);
     }
     return summary;
   }
@@ -53,20 +57,20 @@ export default class Gmail2Slack {
    * @param sendToString
    */
   private createSendTo(sendToString: string): string {
-    let sendTo = sendToString === '' ? '@channel' : sendToString;
+    let sendTo = sendToString === "" ? "@channel" : sendToString;
     // 送信IDが1つの場合は、数値型なので文字列へ変換する。
     sendTo = String(sendTo);
-    let sendToArray = sendTo.split(',');
-    let result = '';
+    const sendToArray = sendTo.split(",");
+    let result = "";
     for (let elem of sendToArray) {
-      if (elem.indexOf('@') != 0) {
-        elem = '@' + elem;
+      if (elem.indexOf("@") != 0) {
+        elem = "@" + elem;
       }
 
-      if (elem == '@here' || elem == '@channel' || elem == '@everyone') {
-        elem = elem.replace('@', '!');
+      if (elem == "@here" || elem == "@channel" || elem == "@everyone") {
+        elem = elem.replace("@", "!");
       }
-      result += '<' + elem + '>' + ' ';
+      result += "<" + elem + ">" + " ";
     }
     return result;
   }
@@ -76,32 +80,38 @@ export default class Gmail2Slack {
    * @param feeds
    */
   public postMessage(): void {
-    let threads = GmailApp.search(this.query, 0, 50);
-    let msgs = GmailApp.getMessagesForThreads(threads);
+    const threads = GmailApp.search(this.query, 0, 50);
+    const msgs = GmailApp.getMessagesForThreads(threads);
     //各スレッド×メール
-    for (var i = msgs.length - 1; i >= 0; i--) {
-      let msgsInThread = msgs[i];
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      const msgsInThread = msgs[i];
       for (let j = 0; j < msgsInThread.length; j++) {
-        let msg = msgsInThread[j];
-        let dateString: string = Utilities.formatDate(msg.getDate(), 'JST', 'yyyy-MM-dd HH:mm:ss');
-        let mailUrl = 'https://mail.google.com/mail/u/0/?shva=1#inbox/' + msg.getId();
-        let payload = {
+        const msg = msgsInThread[j];
+        const dateString: string = Utilities.formatDate(
+          msg.getDate(),
+          "JST",
+          "yyyy-MM-dd HH:mm:ss"
+        );
+        const mailUrl =
+          "https://mail.google.com/mail/u/0/?shva=1#inbox/" + msg.getId();
+        const payload = {
           channel: this.channel,
           attachments: [
             {
-              fallback: 'メールを受信しました。（' + mailUrl + '）',
-              pretext: this.createSendTo(this.sendTo) + ' メールを受信しました。',
+              fallback: "メールを受信しました。（" + mailUrl + "）",
+              pretext:
+                this.createSendTo(this.sendTo) + " メールを受信しました。",
               title: msg.getSubject(),
               title_link: mailUrl,
               text: this.getMailSummaryOrBlank(msg.getPlainBody()),
               fields: [
                 {
-                  title: '受信時刻',
+                  title: "受信時刻",
                   value: dateString,
                   short: true
                 },
                 {
-                  title: 'タグ',
+                  title: "タグ",
                   value: this.note,
                   short: true
                 }
@@ -109,16 +119,16 @@ export default class Gmail2Slack {
             }
           ]
         };
-        const options: Object = {
-          method: 'post',
-          contentType: 'application/json',
+        const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+          method: "post",
+          contentType: "application/json",
           payload: JSON.stringify(payload)
         };
 
         try {
           Utils.fetchAsJson(this.url, options);
         } catch (e) {
-          if (e.errors == 'Rate limit exceeded') {
+          if (e.errors == "Rate limit exceeded") {
             throw e.errors;
           }
         }
