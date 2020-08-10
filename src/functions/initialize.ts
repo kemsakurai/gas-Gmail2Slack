@@ -1,4 +1,4 @@
-import Utils from "./Utils";
+import Utils from "../libs/Utils";
 
 export const initialize = (): void => {
   console.info("initialize start");

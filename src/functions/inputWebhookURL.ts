@@ -1,4 +1,4 @@
-import Utils from "./Utils";
+import Utils from "../libs/Utils";
 export const inputWebhookURL = (): void => {
   const ui = SpreadsheetApp.getUi();
   const response = ui.prompt("Slack の Webhook URL を入力してください。");

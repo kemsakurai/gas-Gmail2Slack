@@ -1,5 +1,5 @@
-import Utils from "./Utils";
-import Gmail2Slack from "./Gmail2Slack";
+import Utils from "../libs/Utils";
+import Gmail2Slack from "../Gmail2Slack";
 
 export const sendEmail2Slack = (): void => {
   console.info("sendEmail2Slack start");

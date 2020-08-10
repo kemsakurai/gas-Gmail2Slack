@@ -1,4 +1,4 @@
-import Utils from "./Utils";
+import Utils from "./libs/Utils";
 
 export default class Gmail2Slack {
   note: string;

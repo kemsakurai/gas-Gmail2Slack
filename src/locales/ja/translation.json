@@ -1,0 +1,7 @@
+{
+  "initialSetting": "初期設定",
+  "createConfigSheets": "設定シート作成",
+  "inputWebhookURL": "Webhook URL設定",
+  "sendEmailToSlack": "Slack にメールを通知する",
+  "scheduleExecution": "スケジュール実行"
+}

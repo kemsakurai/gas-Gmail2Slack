@@ -1,0 +1,7 @@
+{
+  "initialSetting": "Initial setting",
+  "createConfigSheets": "Create config sheets",
+  "inputWebhookURL": "Input webhook URL",
+  "sendEmailToSlack": "Send email to Slack",
+  "scheduleExecution": "Schedule execution"
+}

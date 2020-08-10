@@ -58,11 +58,11 @@
       "tsx",
       "js",
       "jsx",
-      "json",
       "node"
     ]
   },
   "dependencies": {
-    "@types/mocha": "^5.2.7"
+    "@types/mocha": "^5.2.7",
+    "i18next": "^19.6.3"
   }
 }
