@@ -8,6 +8,7 @@ describe("i18n", () => {
       expect(actual).toBe(expected);
     });
     it("initialSetting en", () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       Session.getActiveUserLocale = jest.fn().mockImplementation(name => {
         return "en";
       });
@@ -17,6 +18,7 @@ describe("i18n", () => {
       expect(actual).toBe(expected);
     });
     it("webhookURLIsNotSet en", () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       Session.getActiveUserLocale = jest.fn().mockImplementation(name => {
         return "en";
       });

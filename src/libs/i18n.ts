@@ -1,9 +1,9 @@
-import i18next from "i18next";
+import i18n from "i18next";
 import * as enLocalesTrJson from "../locales/en/translation.json";
 import * as jaLocalesTrJson from "../locales/ja/translation.json";
 
 const lang = Session.getActiveUserLocale();
-i18next.init(
+i18n.init(
   {
     lng: lang,
     fallbackLng: "ja",
@@ -22,4 +22,4 @@ i18next.init(
     console.info("i18n init end.");
   }
 );
-export default i18next;
+export default i18n;

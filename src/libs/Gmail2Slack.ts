@@ -96,8 +96,7 @@ export default class Gmail2Slack {
           attachments: [
             {
               fallback: i18n.t("youGotMail") + "（" + mailUrl + "）",
-              pretext:
-                this.createSendTo(this.sendTo) + i18n.t("youGotMail") ,
+              pretext: this.createSendTo(this.sendTo) + i18n.t("youGotMail"),
               title: msg.getSubject(),
               title_link: mailUrl,
               text: this.getMailSummaryOrBlank(msg.getPlainBody()),

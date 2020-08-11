@@ -9,6 +9,8 @@ function createSchedule() {
 function updateSchedule() {
 }
 function sendEmail2Slack() {
+}
+function i18next() {
 }/******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -2660,291 +2662,43 @@ module.exports = g;
 
 /***/ }),
 
-/***/ "./src/Gmail2Slack.ts":
-/*!****************************!*\
-  !*** ./src/Gmail2Slack.ts ***!
-  \****************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Gmail2Slack; });
-/* harmony import */ var _Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Utils */ "./src/Utils.ts");
-
-class Gmail2Slack {
-    /**
-     * constructor
-     * @param note
-     * @param channel
-     * @param sendTo
-     * @param messageBodylength
-     * @param query
-     */
-    constructor(note, channel, sendTo, messageBodylength, query) {
-        this.note = note;
-        this.channel = channel;
-        this.sendTo = sendTo;
-        this.messageBodylength = messageBodylength;
-        this.query = query;
-        this.url = _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].getWebhookURL();
-        _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].checkNotEmpty(this.url, "Webhook URL が 未設定です。Webhook URL を設定してください。");
-    }
-    /**
-     * getMailSummaryOrBlank
-     * @param feedItem
-     */
-    getMailSummaryOrBlank(mailBody) {
-        let summary;
-        if (this.messageBodylength <= -1) {
-            summary = mailBody;
-        }
-        else if (this.messageBodylength == 0) {
-            summary = "";
-        }
-        else {
-            summary =
-                mailBody === "" ? "" : _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].truncate(mailBody, this.messageBodylength);
-        }
-        return summary;
-    }
-    /**
-     * createSendTo
-     * @param sendToString
-     */
-    createSendTo(sendToString) {
-        let sendTo = sendToString === "" ? "@channel" : sendToString;
-        // 送信IDが1つの場合は、数値型なので文字列へ変換する。
-        sendTo = String(sendTo);
-        const sendToArray = sendTo.split(",");
-        let result = "";
-        for (let elem of sendToArray) {
-            if (elem.indexOf("@") != 0) {
-                elem = "@" + elem;
-            }
-            if (elem == "@here" || elem == "@channel" || elem == "@everyone") {
-                elem = elem.replace("@", "!");
-            }
-            result += "<" + elem + ">" + " ";
-        }
-        return result;
-    }
-    /**
-     * postMessage
-     * @param feeds
-     */
-    postMessage() {
-        const threads = GmailApp.search(this.query, 0, 50);
-        const msgs = GmailApp.getMessagesForThreads(threads);
-        //各スレッド×メール
-        for (let i = msgs.length - 1; i >= 0; i--) {
-            const msgsInThread = msgs[i];
-            for (let j = 0; j < msgsInThread.length; j++) {
-                const msg = msgsInThread[j];
-                const dateString = Utilities.formatDate(msg.getDate(), "JST", "yyyy-MM-dd HH:mm:ss");
-                const mailUrl = "https://mail.google.com/mail/u/0/?shva=1#inbox/" + msg.getId();
-                const payload = {
-                    channel: this.channel,
-                    attachments: [
-                        {
-                            fallback: "メールを受信しました。（" + mailUrl + "）",
-                            pretext: this.createSendTo(this.sendTo) + " メールを受信しました。",
-                            title: msg.getSubject(),
-                            title_link: mailUrl,
-                            text: this.getMailSummaryOrBlank(msg.getPlainBody()),
-                            fields: [
-                                {
-                                    title: "受信時刻",
-                                    value: dateString,
-                                    short: true
-                                },
-                                {
-                                    title: "タグ",
-                                    value: this.note,
-                                    short: true
-                                }
-                            ]
-                        }
-                    ]
-                };
-                const options = {
-                    method: "post",
-                    contentType: "application/json",
-                    payload: JSON.stringify(payload)
-                };
-                try {
-                    _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].fetchAsJson(this.url, options);
-                }
-                catch (e) {
-                    if (e.errors == "Rate limit exceeded") {
-                        throw e.errors;
-                    }
-                }
-                //メールを既読にする
-                msg.markRead();
-            }
-        }
-        return;
-    }
-}
-
-
-/***/ }),
-
-/***/ "./src/Utils.ts":
-/*!**********************!*\
-  !*** ./src/Utils.ts ***!
-  \**********************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Utils; });
-class Utils {
-    static fetchAsJson(url, requestOptions
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ) {
-        const response = UrlFetchApp.fetch(url, requestOptions);
-        return JSON.parse(response.getContentText());
-    }
-    /**
-     * truncate
-     * @param value
-     * @param length
-     */
-    static truncate(value, length) {
-        if (value.length <= length) {
-            return value;
-        }
-        return value.substring(0, length) + "...";
-    }
-    /**
-     * setWebhookURL
-     * @param token
-     */
-    static setWebhookURL(token) {
-        PropertiesService.getScriptProperties().setProperty("SLACK_WEBHOOK_URL", token);
-    }
-    /**
-     * getWebhookURL
-     */
-    static getWebhookURL() {
-        return PropertiesService.getScriptProperties().getProperty("SLACK_WEBHOOK_URL");
-    }
-    /**
-     * checkNotEmpty
-     */
-    static checkNotEmpty(value, message) {
-        if (typeof value === "undefined" || value == "") {
-            throw new Error(message);
-        }
-    }
-    /**
-     * getConfigSheetName
-     */
-    static getConfigSheetName() {
-        return "Config";
-    }
-}
-
-
-/***/ }),
-
-/***/ "./src/createSchedule.ts":
-/*!*******************************!*\
-  !*** ./src/createSchedule.ts ***!
-  \*******************************/
+/***/ "./src/functions/createSchedule.ts":
+/*!*****************************************!*\
+  !*** ./src/functions/createSchedule.ts ***!
+  \*****************************************/
 /*! exports provided: createSchedule */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createSchedule", function() { return createSchedule; });
+/* harmony import */ var _libs_i18n__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../libs/i18n */ "./src/libs/i18n.ts");
+
 const createSchedule = () => {
     const htmlOutput = HtmlService.createHtmlOutputFromFile("index")
         .setWidth(600)
         .setHeight(100);
-    SpreadsheetApp.getUi().showModalDialog(htmlOutput, "Create schedule");
+    SpreadsheetApp.getUi().showModalDialog(htmlOutput, _libs_i18n__WEBPACK_IMPORTED_MODULE_0__["default"].t("createSchedule"));
 };
 
 
 /***/ }),
 
-/***/ "./src/index.ts":
-/*!**********************!*\
-  !*** ./src/index.ts ***!
-  \**********************/
-/*! no exports provided */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* WEBPACK VAR INJECTION */(function(global) {/* harmony import */ var _initialize__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./initialize */ "./src/initialize.ts");
-/* harmony import */ var _createSchedule__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./createSchedule */ "./src/createSchedule.ts");
-/* harmony import */ var _updateSchedule__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./updateSchedule */ "./src/updateSchedule.ts");
-/* harmony import */ var _inputWebhookURL__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./inputWebhookURL */ "./src/inputWebhookURL.ts");
-/* harmony import */ var _sendEmail2Slack__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./sendEmail2Slack */ "./src/sendEmail2Slack.ts");
-/* harmony import */ var i18next__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! i18next */ "./node_modules/i18next/dist/esm/i18next.js");
-
-
-
-
-
-
-function onOpen() {
-    const lang = Session.getActiveUserLocale();
-    const ui = SpreadsheetApp.getUi();
-    ui.createMenu("gas-Gmail2Slack")
-        .addSubMenu(ui
-        .createMenu(lang === "ja" ? "初期設定" : "Initial setting")
-        .addItem(lang === "ja" ? "設定シート作成" : "Create config sheets", "initialize")
-        .addItem(lang === "ja" ? "Webhook URL設定" : "Input webhook URL", "inputWebhookURL"))
-        .addSeparator()
-        .addItem(lang === "ja" ? "Slack にメールを通知する" : "Send email to Slack", "sendEmail2Slack")
-        .addItem(lang === "ja" ? "スケジュール実行" : "Schedule", "createSchedule")
-        .addToUi();
-}
-i18next__WEBPACK_IMPORTED_MODULE_5__["default"].init({
-    lng: "en",
-    debug: true,
-    resources: {
-        en: {
-            translation: {
-                key: "hello world"
-            }
-        }
-    }
-}, function (err, t) {
-    // initialized and ready to go!
-    document.getElementById("output").innerHTML = i18next__WEBPACK_IMPORTED_MODULE_5__["default"].t("key");
-});
-global.onOpen = onOpen;
-global.initialize = _initialize__WEBPACK_IMPORTED_MODULE_0__["initialize"];
-global.inputWebhookURL = _inputWebhookURL__WEBPACK_IMPORTED_MODULE_3__["inputWebhookURL"];
-global.createSchedule = _createSchedule__WEBPACK_IMPORTED_MODULE_1__["createSchedule"];
-global.updateSchedule = _updateSchedule__WEBPACK_IMPORTED_MODULE_2__["updateSchedule"];
-global.sendEmail2Slack = _sendEmail2Slack__WEBPACK_IMPORTED_MODULE_4__["sendEmail2Slack"];
-
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
-
-/***/ }),
-
-/***/ "./src/initialize.ts":
-/*!***************************!*\
-  !*** ./src/initialize.ts ***!
-  \***************************/
+/***/ "./src/functions/initialize.ts":
+/*!*************************************!*\
+  !*** ./src/functions/initialize.ts ***!
+  \*************************************/
 /*! exports provided: initialize */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "initialize", function() { return initialize; });
-/* harmony import */ var _Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Utils */ "./src/Utils.ts");
+/* harmony import */ var _libs_Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../libs/Utils */ "./src/libs/Utils.ts");
 
 const initialize = () => {
     console.info("initialize start");
-    const configSheetName = _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].getConfigSheetName();
+    const configSheetName = _libs_Utils__WEBPACK_IMPORTED_MODULE_0__["default"].getConfigSheetName();
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(configSheetName);
     if (!sheet) {
         sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet();
@@ -2965,50 +2719,51 @@ const initialize = () => {
 
 /***/ }),
 
-/***/ "./src/inputWebhookURL.ts":
-/*!********************************!*\
-  !*** ./src/inputWebhookURL.ts ***!
-  \********************************/
+/***/ "./src/functions/inputWebhookURL.ts":
+/*!******************************************!*\
+  !*** ./src/functions/inputWebhookURL.ts ***!
+  \******************************************/
 /*! exports provided: inputWebhookURL */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "inputWebhookURL", function() { return inputWebhookURL; });
-/* harmony import */ var _Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Utils */ "./src/Utils.ts");
+/* harmony import */ var _libs_Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../libs/Utils */ "./src/libs/Utils.ts");
+/* harmony import */ var _libs_i18n__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../libs/i18n */ "./src/libs/i18n.ts");
+
 
 const inputWebhookURL = () => {
     const ui = SpreadsheetApp.getUi();
-    const response = ui.prompt("Slack の Webhook URL を入力してください。");
+    const response = ui.prompt(_libs_i18n__WEBPACK_IMPORTED_MODULE_1__["default"].t("showWebhookURL"));
     const url = response.getResponseText();
-    // getSelectedButtonでクリックされたボタンの情報を取得できる。入力値なしか×ボタンをクリックされたかの確認をしている
     if (url == "" || response.getSelectedButton() == ui.Button.CLOSE) {
         return;
     }
-    _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].setWebhookURL(url);
-    ui.alert("入力した値を Slack の Webhook URL として設定しました。");
+    _libs_Utils__WEBPACK_IMPORTED_MODULE_0__["default"].setWebhookURL(url);
+    ui.alert(_libs_i18n__WEBPACK_IMPORTED_MODULE_1__["default"].t("noticeSetWebhookURL"));
 };
 
 
 /***/ }),
 
-/***/ "./src/sendEmail2Slack.ts":
-/*!********************************!*\
-  !*** ./src/sendEmail2Slack.ts ***!
-  \********************************/
+/***/ "./src/functions/sendEmail2Slack.ts":
+/*!******************************************!*\
+  !*** ./src/functions/sendEmail2Slack.ts ***!
+  \******************************************/
 /*! exports provided: sendEmail2Slack */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "sendEmail2Slack", function() { return sendEmail2Slack; });
-/* harmony import */ var _Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Utils */ "./src/Utils.ts");
-/* harmony import */ var _Gmail2Slack__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Gmail2Slack */ "./src/Gmail2Slack.ts");
+/* harmony import */ var _libs_Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../libs/Utils */ "./src/libs/Utils.ts");
+/* harmony import */ var _libs_Gmail2Slack__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../libs/Gmail2Slack */ "./src/libs/Gmail2Slack.ts");
 
 
 const sendEmail2Slack = () => {
     console.info("sendEmail2Slack start");
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(_Utils__WEBPACK_IMPORTED_MODULE_0__["default"].getConfigSheetName());
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(_libs_Utils__WEBPACK_IMPORTED_MODULE_0__["default"].getConfigSheetName());
     const range = sheet.getRange(2, 1, sheet.getLastRow() - 1, 5);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const queries = range.getValues();
@@ -3016,7 +2771,7 @@ const sendEmail2Slack = () => {
         if (elem[0] == "" || elem[1] == "" || elem[4] == "") {
             continue;
         }
-        const gmail2Slack = new _Gmail2Slack__WEBPACK_IMPORTED_MODULE_1__["default"](elem[0], elem[1], elem[2], elem[3], elem[4]);
+        const gmail2Slack = new _libs_Gmail2Slack__WEBPACK_IMPORTED_MODULE_1__["default"](elem[0], elem[1], elem[2], elem[3], elem[4]);
         gmail2Slack.postMessage();
     }
     console.info("sendEmail2Slack end");
@@ -3025,10 +2780,10 @@ const sendEmail2Slack = () => {
 
 /***/ }),
 
-/***/ "./src/updateSchedule.ts":
-/*!*******************************!*\
-  !*** ./src/updateSchedule.ts ***!
-  \*******************************/
+/***/ "./src/functions/updateSchedule.ts":
+/*!*****************************************!*\
+  !*** ./src/functions/updateSchedule.ts ***!
+  \*****************************************/
 /*! exports provided: updateSchedule */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3153,6 +2908,308 @@ function setTrigger_(triggerId) {
     PropertiesService.getScriptProperties().setProperty(KEY, triggerId);
 }
 
+
+/***/ }),
+
+/***/ "./src/index.ts":
+/*!**********************!*\
+  !*** ./src/index.ts ***!
+  \**********************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* WEBPACK VAR INJECTION */(function(global) {/* harmony import */ var _functions_initialize__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./functions/initialize */ "./src/functions/initialize.ts");
+/* harmony import */ var _functions_createSchedule__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./functions/createSchedule */ "./src/functions/createSchedule.ts");
+/* harmony import */ var _functions_updateSchedule__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./functions/updateSchedule */ "./src/functions/updateSchedule.ts");
+/* harmony import */ var _functions_inputWebhookURL__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./functions/inputWebhookURL */ "./src/functions/inputWebhookURL.ts");
+/* harmony import */ var _functions_sendEmail2Slack__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./functions/sendEmail2Slack */ "./src/functions/sendEmail2Slack.ts");
+/* harmony import */ var _libs_i18n__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./libs/i18n */ "./src/libs/i18n.ts");
+
+
+
+
+
+
+function onOpen() {
+    const lang = Session.getActiveUserLocale();
+    _libs_i18n__WEBPACK_IMPORTED_MODULE_5__["default"].changeLanguage(lang);
+    const ui = SpreadsheetApp.getUi();
+    ui.createMenu("gas-Gmail2Slack")
+        .addSubMenu(ui
+        .createMenu(_libs_i18n__WEBPACK_IMPORTED_MODULE_5__["default"].t("initialSetting"))
+        .addItem(_libs_i18n__WEBPACK_IMPORTED_MODULE_5__["default"].t("createConfigSheets"), "initialize")
+        .addItem(_libs_i18n__WEBPACK_IMPORTED_MODULE_5__["default"].t("inputWebhookURL"), "inputWebhookURL"))
+        .addSeparator()
+        .addItem(_libs_i18n__WEBPACK_IMPORTED_MODULE_5__["default"].t("sendEmailToSlack"), "sendEmail2Slack")
+        .addItem(_libs_i18n__WEBPACK_IMPORTED_MODULE_5__["default"].t("scheduleExecution"), "createSchedule")
+        .addToUi();
+}
+global.onOpen = onOpen;
+global.initialize = _functions_initialize__WEBPACK_IMPORTED_MODULE_0__["initialize"];
+global.inputWebhookURL = _functions_inputWebhookURL__WEBPACK_IMPORTED_MODULE_3__["inputWebhookURL"];
+global.createSchedule = _functions_createSchedule__WEBPACK_IMPORTED_MODULE_1__["createSchedule"];
+global.updateSchedule = _functions_updateSchedule__WEBPACK_IMPORTED_MODULE_2__["updateSchedule"];
+global.sendEmail2Slack = _functions_sendEmail2Slack__WEBPACK_IMPORTED_MODULE_4__["sendEmail2Slack"];
+global.i18next = _libs_i18n__WEBPACK_IMPORTED_MODULE_5__["default"];
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./src/libs/Gmail2Slack.ts":
+/*!*********************************!*\
+  !*** ./src/libs/Gmail2Slack.ts ***!
+  \*********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Gmail2Slack; });
+/* harmony import */ var _Utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Utils */ "./src/libs/Utils.ts");
+/* harmony import */ var _libs_i18n__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../libs/i18n */ "./src/libs/i18n.ts");
+
+
+class Gmail2Slack {
+    /**
+     * constructor
+     * @param note
+     * @param channel
+     * @param sendTo
+     * @param messageBodylength
+     * @param query
+     */
+    constructor(note, channel, sendTo, messageBodylength, query) {
+        this.note = note;
+        this.channel = channel;
+        this.sendTo = sendTo;
+        this.messageBodylength = messageBodylength;
+        this.query = query;
+        this.url = _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].getWebhookURL();
+        _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].checkNotEmpty(this.url, _libs_i18n__WEBPACK_IMPORTED_MODULE_1__["default"].t("webhookURLIsNotSet"));
+    }
+    /**
+     * getMailSummaryOrBlank
+     * @param feedItem
+     */
+    getMailSummaryOrBlank(mailBody) {
+        let summary;
+        if (this.messageBodylength <= -1) {
+            summary = mailBody;
+        }
+        else if (this.messageBodylength == 0) {
+            summary = "";
+        }
+        else {
+            summary =
+                mailBody === "" ? "" : _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].truncate(mailBody, this.messageBodylength);
+        }
+        return summary;
+    }
+    /**
+     * createSendTo
+     * @param sendToString
+     */
+    createSendTo(sendToString) {
+        let sendTo = sendToString === "" ? "@channel" : sendToString;
+        // 送信IDが1つの場合は、数値型なので文字列へ変換する。
+        sendTo = String(sendTo);
+        const sendToArray = sendTo.split(",");
+        let result = "";
+        for (let elem of sendToArray) {
+            if (elem.indexOf("@") != 0) {
+                elem = "@" + elem;
+            }
+            if (elem == "@here" || elem == "@channel" || elem == "@everyone") {
+                elem = elem.replace("@", "!");
+            }
+            result += "<" + elem + ">" + " ";
+        }
+        return result;
+    }
+    /**
+     * postMessage
+     * @param feeds
+     */
+    postMessage() {
+        const threads = GmailApp.search(this.query, 0, 50);
+        const msgs = GmailApp.getMessagesForThreads(threads);
+        //各スレッド×メール
+        for (let i = msgs.length - 1; i >= 0; i--) {
+            const msgsInThread = msgs[i];
+            for (let j = 0; j < msgsInThread.length; j++) {
+                const msg = msgsInThread[j];
+                const dateString = Utilities.formatDate(msg.getDate(), "JST", "yyyy-MM-dd HH:mm:ss");
+                const mailUrl = "https://mail.google.com/mail/u/0/?shva=1#inbox/" + msg.getId();
+                const payload = {
+                    channel: this.channel,
+                    attachments: [
+                        {
+                            fallback: _libs_i18n__WEBPACK_IMPORTED_MODULE_1__["default"].t("youGotMail") + "（" + mailUrl + "）",
+                            pretext: this.createSendTo(this.sendTo) + _libs_i18n__WEBPACK_IMPORTED_MODULE_1__["default"].t("youGotMail"),
+                            title: msg.getSubject(),
+                            title_link: mailUrl,
+                            text: this.getMailSummaryOrBlank(msg.getPlainBody()),
+                            fields: [
+                                {
+                                    title: _libs_i18n__WEBPACK_IMPORTED_MODULE_1__["default"].t("receptionTime"),
+                                    value: dateString,
+                                    short: true
+                                },
+                                {
+                                    title: _libs_i18n__WEBPACK_IMPORTED_MODULE_1__["default"].t("tag"),
+                                    value: this.note,
+                                    short: true
+                                }
+                            ]
+                        }
+                    ]
+                };
+                const options = {
+                    method: "post",
+                    contentType: "application/json",
+                    payload: JSON.stringify(payload)
+                };
+                try {
+                    _Utils__WEBPACK_IMPORTED_MODULE_0__["default"].fetchAsJson(this.url, options);
+                }
+                catch (e) {
+                    if (e.errors == "Rate limit exceeded") {
+                        throw e.errors;
+                    }
+                }
+                //メールを既読にする
+                msg.markRead();
+            }
+        }
+        return;
+    }
+}
+
+
+/***/ }),
+
+/***/ "./src/libs/Utils.ts":
+/*!***************************!*\
+  !*** ./src/libs/Utils.ts ***!
+  \***************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Utils; });
+class Utils {
+    static fetchAsJson(url, requestOptions
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ) {
+        const response = UrlFetchApp.fetch(url, requestOptions);
+        return JSON.parse(response.getContentText());
+    }
+    /**
+     * truncate
+     * @param value
+     * @param length
+     */
+    static truncate(value, length) {
+        if (value.length <= length) {
+            return value;
+        }
+        return value.substring(0, length) + "...";
+    }
+    /**
+     * setWebhookURL
+     * @param token
+     */
+    static setWebhookURL(token) {
+        PropertiesService.getScriptProperties().setProperty("SLACK_WEBHOOK_URL", token);
+    }
+    /**
+     * getWebhookURL
+     */
+    static getWebhookURL() {
+        return PropertiesService.getScriptProperties().getProperty("SLACK_WEBHOOK_URL");
+    }
+    /**
+     * checkNotEmpty
+     */
+    static checkNotEmpty(value, message) {
+        if (typeof value === "undefined" || value == "") {
+            throw new Error(message);
+        }
+    }
+    /**
+     * getConfigSheetName
+     */
+    static getConfigSheetName() {
+        return "Config";
+    }
+}
+
+
+/***/ }),
+
+/***/ "./src/libs/i18n.ts":
+/*!**************************!*\
+  !*** ./src/libs/i18n.ts ***!
+  \**************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var i18next__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! i18next */ "./node_modules/i18next/dist/esm/i18next.js");
+/* harmony import */ var _locales_en_translation_json__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../locales/en/translation.json */ "./src/locales/en/translation.json");
+var _locales_en_translation_json__WEBPACK_IMPORTED_MODULE_1___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../locales/en/translation.json */ "./src/locales/en/translation.json", 1);
+/* harmony import */ var _locales_ja_translation_json__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../locales/ja/translation.json */ "./src/locales/ja/translation.json");
+var _locales_ja_translation_json__WEBPACK_IMPORTED_MODULE_2___namespace = /*#__PURE__*/__webpack_require__.t(/*! ../locales/ja/translation.json */ "./src/locales/ja/translation.json", 1);
+
+
+
+const lang = Session.getActiveUserLocale();
+i18next__WEBPACK_IMPORTED_MODULE_0__["default"].init({
+    lng: lang,
+    fallbackLng: "ja",
+    debug: true,
+    resources: {
+        en: {
+            translation: _locales_en_translation_json__WEBPACK_IMPORTED_MODULE_1___namespace
+        },
+        ja: {
+            translation: _locales_ja_translation_json__WEBPACK_IMPORTED_MODULE_2___namespace
+        }
+    }
+}, 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function (err, t) {
+    console.info("i18n init end.");
+});
+/* harmony default export */ __webpack_exports__["default"] = (i18next__WEBPACK_IMPORTED_MODULE_0__["default"]);
+
+
+/***/ }),
+
+/***/ "./src/locales/en/translation.json":
+/*!*****************************************!*\
+  !*** ./src/locales/en/translation.json ***!
+  \*****************************************/
+/*! exports provided: initialSetting, createConfigSheets, inputWebhookURL, sendEmailToSlack, scheduleExecution, createSchedule, showWebhookURL, noticeSetWebhookURL, youGotMail, receptionTime, tag, webhookURLIsNotSet, default */
+/***/ (function(module) {
+
+module.exports = JSON.parse("{\"initialSetting\":\"Initial setting\",\"createConfigSheets\":\"Create config sheets\",\"inputWebhookURL\":\"Input webhook URL\",\"sendEmailToSlack\":\"Send email to Slack\",\"scheduleExecution\":\"Schedule execution\",\"createSchedule\":\"Create schedule\",\"showWebhookURL\":\"Enter the Slack webhook URL.\",\"noticeSetWebhookURL\":\"We've set the value you entered as the Slack webhook URL.\",\"youGotMail\":\"You got mail.\",\"receptionTime\":\"Reception Time\",\"tag\":\"Tag\",\"webhookURLIsNotSet\":\"Webhook URL is not set. Set the webhook URL.\"}");
+
+/***/ }),
+
+/***/ "./src/locales/ja/translation.json":
+/*!*****************************************!*\
+  !*** ./src/locales/ja/translation.json ***!
+  \*****************************************/
+/*! exports provided: initialSetting, createConfigSheets, inputWebhookURL, sendEmailToSlack, scheduleExecution, createSchedule, showWebhookURL, noticeSetWebhookURL, youGotMail, receptionTime, tag, webhookURLIsNotSet, default */
+/***/ (function(module) {
+
+module.exports = JSON.parse("{\"initialSetting\":\"初期設定\",\"createConfigSheets\":\"設定シート作成\",\"inputWebhookURL\":\"Webhook URL設定\",\"sendEmailToSlack\":\"Slack にメールを通知する\",\"scheduleExecution\":\"スケジュール実行\",\"createSchedule\":\"スケジュール作成\",\"showWebhookURL\":\"Slack の Webhook URL を入力してください。\",\"noticeSetWebhookURL\":\"入力した値を Slack の Webhook URL として設定しました。\",\"youGotMail\":\"メールを受信しました。\",\"receptionTime\":\"受信時刻\",\"tag\":\"タグ\",\"webhookURLIsNotSet\":\"Webhook URL が 未設定です。Webhook URL を設定してください。\"}");
 
 /***/ })
 
