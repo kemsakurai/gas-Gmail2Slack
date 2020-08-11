@@ -16,5 +16,14 @@ describe("i18n", () => {
       const expected = "Initial setting";
       expect(actual).toBe(expected);
     });
+    it("webhookURLIsNotSet en", () => {
+      Session.getActiveUserLocale = jest.fn().mockImplementation(name => {
+        return "en";
+      });
+      i18next.changeLanguage("en");
+      const actual = i18next.t("webhookURLIsNotSet");
+      const expected = "Webhook URL is not set. Set the webhook URL.";
+      expect(actual).toBe(expected);
+    });
   });
 });

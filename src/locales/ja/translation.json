@@ -3,5 +3,12 @@
   "createConfigSheets": "設定シート作成",
   "inputWebhookURL": "Webhook URL設定",
   "sendEmailToSlack": "Slack にメールを通知する",
-  "scheduleExecution": "スケジュール実行"
+  "scheduleExecution": "スケジュール実行",
+  "createSchedule": "スケジュール作成",
+  "showWebhookURL": "Slack の Webhook URL を入力してください。",
+  "noticeSetWebhookURL": "入力した値を Slack の Webhook URL として設定しました。",
+  "youGotMail": "メールを受信しました。",
+  "receptionTime": "受信時刻",
+  "tag": "タグ",
+  "webhookURLIsNotSet": "Webhook URL が 未設定です。Webhook URL を設定してください。"
 }

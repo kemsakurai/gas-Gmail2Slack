@@ -1,12 +1,13 @@
 import Utils from "../libs/Utils";
+import i18n from "../libs/i18n";
+
 export const inputWebhookURL = (): void => {
   const ui = SpreadsheetApp.getUi();
-  const response = ui.prompt("Slack の Webhook URL を入力してください。");
+  const response = ui.prompt(i18n.t("showWebhookURL"));
   const url = response.getResponseText();
-  // getSelectedButtonでクリックされたボタンの情報を取得できる。入力値なしか×ボタンをクリックされたかの確認をしている
   if (url == "" || response.getSelectedButton() == ui.Button.CLOSE) {
     return;
   }
   Utils.setWebhookURL(url);
-  ui.alert("入力した値を Slack の Webhook URL として設定しました。");
+  ui.alert(i18n.t("noticeSetWebhookURL"));
 };

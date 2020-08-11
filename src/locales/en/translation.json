@@ -3,5 +3,12 @@
   "createConfigSheets": "Create config sheets",
   "inputWebhookURL": "Input webhook URL",
   "sendEmailToSlack": "Send email to Slack",
-  "scheduleExecution": "Schedule execution"
+  "scheduleExecution": "Schedule execution",
+  "createSchedule": "Create schedule",
+  "showWebhookURL": "Enter the Slack webhook URL.",
+  "noticeSetWebhookURL": "We've set the value you entered as the Slack webhook URL.",
+  "youGotMail": "You got mail.",
+  "receptionTime": "Reception Time",
+  "tag": "Tag",
+  "webhookURLIsNotSet": "Webhook URL is not set. Set the webhook URL."
 }

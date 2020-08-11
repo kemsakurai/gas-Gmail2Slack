@@ -1,4 +1,5 @@
-import Utils from "./libs/Utils";
+import Utils from "./Utils";
+import i18n from "../libs/i18n";
 
 export default class Gmail2Slack {
   note: string;
@@ -29,12 +30,8 @@ export default class Gmail2Slack {
     this.messageBodylength = messageBodylength;
     this.query = query;
     this.url = Utils.getWebhookURL();
-    Utils.checkNotEmpty(
-      this.url,
-      "Webhook URL が 未設定です。Webhook URL を設定してください。"
-    );
+    Utils.checkNotEmpty(this.url, i18n.t("webhookURLIsNotSet"));
   }
-
   /**
    * getMailSummaryOrBlank
    * @param feedItem
@@ -98,20 +95,20 @@ export default class Gmail2Slack {
           channel: this.channel,
           attachments: [
             {
-              fallback: "メールを受信しました。（" + mailUrl + "）",
+              fallback: i18n.t("youGotMail") + "（" + mailUrl + "）",
               pretext:
-                this.createSendTo(this.sendTo) + " メールを受信しました。",
+                this.createSendTo(this.sendTo) + i18n.t("youGotMail") ,
               title: msg.getSubject(),
               title_link: mailUrl,
               text: this.getMailSummaryOrBlank(msg.getPlainBody()),
               fields: [
                 {
-                  title: "受信時刻",
+                  title: i18n.t("receptionTime"),
                   value: dateString,
                   short: true
                 },
                 {
-                  title: "タグ",
+                  title: i18n.t("tag"),
                   value: this.note,
                   short: true
                 }
