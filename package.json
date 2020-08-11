@@ -63,7 +63,6 @@
     ]
   },
   "dependencies": {
-    "@types/mocha": "^5.2.7",
-    "i18next": "^19.6.3"
+    "@types/mocha": "^5.2.7"
   }
 }
