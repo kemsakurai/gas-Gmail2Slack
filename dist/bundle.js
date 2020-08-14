@@ -174,7 +174,7 @@ const initialize = () => {
         const range = sheet.getRange("A1:E1");
         range.setBackground("yellow");
         const headers = [];
-        headers.push("Notes");
+        headers.push("Tag");
         headers.push("Channel");
         headers.push("SendTo");
         headers.push("Message body length");
